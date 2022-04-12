@@ -27,6 +27,7 @@ namespace Weather.Views
             
             service = new OpenWeatherService();
             groupedforecast = new GroupedForecast();
+
         }
 
         protected override void OnAppearing()
@@ -35,7 +36,8 @@ namespace Weather.Views
 
             //Code here will run right before the screen appears
             //You want to set the Title or set the City
-
+            wl.Text = "Forecast for " + Title;
+           
             //This is making the first load of data
             MainThread.BeginInvokeOnMainThread(async () => {await LoadForecast();});
         }
@@ -43,6 +45,23 @@ namespace Weather.Views
         private async Task LoadForecast()
         {
             //Heare you load the forecast 
+
+            await Task.Run(() =>
+            {
+                Task<Forecast> fc = service.GetForecastAsync(Title);
+
+                Device.BeginInvokeOnMainThread(() =>
+                {
+                    groupedforecast.Items = fc.Result.Items.GroupBy(c => c.DateTime.Date);
+                    weatherListView.ItemsSource = groupedforecast.Items;
+                   // weatherListView.ItemsSource = fc.Result.Items;
+                });
+            });
+        }
+
+        private async void Button_Clicked(object sender, EventArgs e)
+        {
+            await LoadForecast();
         }
     }
 }

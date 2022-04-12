@@ -15,6 +15,7 @@ using Weather.Services;
 namespace Weather.Consoles
 {
     //Your can move your Console application Main here. Rename Main to myMain and make it NOT static and async
+
     class Program
     {
         #region used by the Console
@@ -32,7 +33,67 @@ namespace Weather.Consoles
         //This is the method you replace with your async method renamed and NON static Main
         public async Task myMain()
         {
-            theConsole.WriteLine("Demo program output");
+            OpenWeatherService service = new OpenWeatherService();
+            service.WeatherForecastAvailable += ReportWeatherDataAvailable;
+
+            //Task<Forecast> t1 = null, t2 = null, t3 = null, t4 = null;
+            List<Forecast> forecasts = new List<Forecast>();
+            Exception exception = null;
+            try
+            {
+                double latitude = 59.5086798659495;
+                double longitude = 18.2654625932976;
+                forecasts.Add(await service.GetForecastAsync(latitude, longitude));
+                theConsole.WriteLine(forecasts[0].City);
+
+                //Create the two tasks and wait for comletion
+                //t1 = service.GetForecastAsync(latitude, longitude);
+                //t2 = service.GetForecastAsync("Miami");
+
+
+
+                //Task.WaitAll(t1, t2);
+                //Thread.Sleep(20_000);
+                //t3 = service.GetForecastAsync(latitude, longitude);
+                //t4 = service.GetForecastAsync("Miami");
+
+
+                ////Wait and confirm we get an event showing cahced data avaialable
+                //Task.WaitAll(t3, t4);
+
+            }
+            catch (Exception ex)
+            {
+                //if exception write the message later
+                exception = ex;
+                theConsole.WriteLine(ex.Message);
+            }
+
+            theConsoleString.AppendLine("-----------------");
+            foreach (var forecast in forecasts)
+            {
+                theConsoleString.AppendLine(".....");
+                if (forecast != null)
+                {
+                    theConsoleString.AppendLine($"Weather forecast for {forecast.City}");
+                    var GroupedList = forecast.Items.GroupBy(item => item.DateTime.Date);
+                    foreach (var group in GroupedList)
+                    {
+                        theConsole.WriteLine(group.Key.Date.ToShortDateString());
+                        foreach (var item in group)
+                        {
+
+                            theConsole.WriteLine($"   - {item.DateTime.ToShortTimeString()}: {item.Description}, temperature: {item.Temperature} degC, wind: {item.WindSpeed} m/s");
+                        }
+                    }
+                }
+                else
+                {
+                    theConsoleString.AppendLine($"Geolocation weather service error.");
+                    theConsoleString.AppendLine($"Error: {exception.Message}");
+                }
+            }
+            /*theConsole.WriteLine("Demo program output");
 
             //Write an output to the Console
             theConsole.Write("One ");
@@ -60,13 +121,17 @@ namespace Weather.Consoles
                 string str = await w.DownloadStringTaskAsync("https://dotnet.microsoft.com/");
                 theConsoleString.Append($"Nr of characters downloaded: {str.Length}");
             }
-            theConsole.WriteLine(theConsoleString.ToString());
+            theConsole.WriteLine(theConsoleString.ToString());*/
         }
 
         //If you have any event handlers, they could be placed here
         void myEventHandler(object sender, string message)
         {
             theConsole.WriteLine($"Event message: {message}"); //theConsole is a Captured Variable, don't use myConsoleString here
+        }
+        void ReportWeatherDataAvailable(object sender, string message)
+        {
+            theConsole.WriteLine($"Event message from weather service: {message}");
         }
         #endregion
     }
